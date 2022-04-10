@@ -4,33 +4,23 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-// app.get('/', (req, res) => {
-//   res.status(200).send('Hello World!');
 
-// })
-
-// app.post('/', (req,res) => {
-//     res.status(200).send('Hello World!');
-// });
 const tours = JSON.parse(fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`));
 
+const getAllTours = (req, res) => {
+    res
+    .status(200)
+    .json({
+       status: 'success',
+       results: tours.length,
+       data: {
+           tours
+       }
+         
+    });
+};
 
-app.get('/api/v1/tours/', (req, res) => {
- res
- .status(200)
- .json({
-    status: 'success',
-    results: tours.length,
-    data: {
-        tours
-    }
-      
- });
-});
-
-// used for getting json of specific id of tours
-// for making it optional use ? : /:id/:x/:y?
-app.get('/api/v1/tours/:id', (req, res) => {
+const getTour =  (req, res) => {
     console.log(req.params.id);
 
     // req.params.id is not integer to convert it do the trick of multiplying it with 1 or below method 
@@ -55,32 +45,30 @@ app.get('/api/v1/tours/:id', (req, res) => {
        }
          
     });
-   });
+   }
 
-// To create new tours
-app.post('/api/v1/tours/', (req, res) => {
-  // console.log(req.body);
-  const newId = tours[tours.length - 1].id + 1;
-  // object assign merges two objects here we are puuting recived data into the json file
-  const newTour = Object.assign({id: newId}, req.body);
-  tours.push(newTour);
+const createTour =  (req, res) => {
+    // console.log(req.body);
+    const newId = tours[tours.length - 1].id + 1;
+    // object assign merges two objects here we are puuting recived data into the json file
+    const newTour = Object.assign({id: newId}, req.body);
+    tours.push(newTour);
+  
+    fs.writeFile
+      (`${__dirname}/dev-data/data/tours-simple.json`, 
+      JSON.stringify(tours), 
+      err => {
+          res.status(201).json({
+              status: 'success',
+              data: {
+                  tour: newTour
+              }
+          });
+      }
+      );          
+  }
 
-  fs.writeFile
-    (`${__dirname}/dev-data/data/tours-simple.json`, 
-    JSON.stringify(tours), 
-    err => {
-        res.status(201).json({
-            status: 'success',
-            data: {
-                tour: newTour
-            }
-        });
-    }
-    );          
-});
-
-// for update data only
-app.patch('/api/v1/tours/:id', (req, res) => {
+const updateTour =  (req, res) => {
     if(req.params.id * 1 > tours.length) {
         return res.status(404).json({
             status: 'fail',
@@ -93,10 +81,9 @@ app.patch('/api/v1/tours/:id', (req, res) => {
             tour: '<Updated tour here>'
         }
     });
-});
+}
 
-// for delete data only
-app.delete('/api/v1/tours/:id', (req, res) => {
+const deleteTour =  (req, res) => {
     if(req.params.id * 1 > tours.length) {
         return res.status(404).json({
             status: 'fail',
@@ -107,7 +94,33 @@ app.delete('/api/v1/tours/:id', (req, res) => {
         status: 'success',
         data:  null
     });
-});
+}
+
+// app.get('/api/v1/tours/', getAllTours);
+
+// // used for getting json of specific id of tours
+// // for making it optional use ? : /:id/:x/:y?
+// app.get('/api/v1/tours/:id', getTour);
+
+// // To create new tours
+// app.post('/api/v1/tours/', createTour);
+
+// // for update data only
+// app.patch('/api/v1/tours/:id',updateTour);
+
+// // for delete data only
+// app.delete('/api/v1/tours/:id',deleteTour);
+
+app
+    .route('/api/v1/tours/')
+    .get(getAllTours)
+    .post(createTour)
+
+app
+    .route('/api/v1/tours/:id')
+    .get(getTour)
+    .patch(updateTour)
+    .delete(deleteTour);
 
 const port = 3000;
 app.listen(port, () => {
