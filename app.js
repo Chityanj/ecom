@@ -4,14 +4,25 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
+app.use((req, res, next) => {
+console.log('Hello from the middleware✌️');
+next();
+});
+
+app.use((req, res, next) => {
+    req.requestTime = new Date().toISOString();
+    next();
+})
 
 const tours = JSON.parse(fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`));
 
 const getAllTours = (req, res) => {
+    console.log(req.requestTime);
     res
     .status(200)
     .json({
        status: 'success',
+       requestTime: req.requestTime,
        results: tours.length,
        data: {
            tours
@@ -21,7 +32,7 @@ const getAllTours = (req, res) => {
 };
 
 const getTour =  (req, res) => {
-    console.log(req.params.id);
+    console.log(req.params);
 
     // req.params.id is not integer to convert it do the trick of multiplying it with 1 or below method 
      const id = req.params.id * 1;
